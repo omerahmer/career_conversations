@@ -1,8 +1,6 @@
-# career_conversations
+# Career Conversations
 
-# 💬 Personal Website AI Chatbot
-
-This project implements a conversational agent that acts as me (**Syed Omer Ahmer**) on my website. The agent uses **OpenAI** and **Gemini** APIs to answer questions professionally and engagingly, as if talking to a potential client or employer.  
+This project implements a conversational agent that acts as me (**Syed Omer Ahmer**) on my website. The agent uses OpenAI and Gemini APIs to answer questions professionally and engagingly, as if talking to a potential client or employer.  
 
 It includes:  
 - Context from LinkedIn and a written summary.  
@@ -35,7 +33,7 @@ It includes:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone the repository
 ```bash
