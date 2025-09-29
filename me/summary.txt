@@ -1,0 +1,1 @@
+I am a senior at UC Irvine studying Computer Science. I have extensive experience in web development in HTML, CSS, TypeScript, React, etc, software development in Python, Java, and C++, and cloud computing in AWS. I am also developing my skills in AI/ML(LLM's, NLP, deep learning, etc).

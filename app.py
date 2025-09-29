@@ -7,8 +7,11 @@ from pypdf import PdfReader
 import gradio as gr
 from pydantic import BaseModel
 
-
 load_dotenv(override=True)
+
+class Evaluation(BaseModel):
+    is_acceptable: bool
+    feedback: str
 
 def push(text):
     requests.post(
@@ -19,10 +22,6 @@ def push(text):
             "message": text,
         }
     )
-
-class Evaluation(BaseModel):
-    is_acceptable: bool
-    feedback: str
 
 def record_user_details(email, name="Name not provided", notes="not provided"):
     push(f"Recording {name} with email {email} and notes {notes}")
@@ -80,6 +79,7 @@ tools = [{"type": "function", "function": record_user_details_json},
 class Me:
     def __init__(self):
         self.openai = OpenAI()
+        self.gemini = OpenAI(api_key=os.getenv("GEMINI_API_KEY"), base_url="https://api.gemini.google.com/v1beta/openai")
         self.name = "Syed Omer Ahmer"
         reader = PdfReader("me/linkedin.pdf")
         self.linkedin = ""
@@ -96,11 +96,14 @@ The Agent has been instructed to be professional and engaging, as if talking to 
 The Agent has been provided with context on {self.name} in the form of their summary and LinkedIn details. Here's the information:"
         self.evaluator_system_prompt += f"\n\n## Summary:\n{self.summary}\n\n## LinkedIn Profile:\n{self.linkedin}\n\n"
         self.evaluator_system_prompt += f"With this context, please evaluate the latest response, replying with whether the response is acceptable and your feedback."
+
+    def evaluator_user_prompt(self, reply, message, history):
+        user_prompt = f"Here's the conversation between the User and the Agent: \n\n{history}\n\n"
+        user_prompt += f"Here's the latest message from the User: \n\n{message}\n\n"
+        user_prompt += f"Here's the latest response from the Agent: \n\n{reply}\n\n"
+        user_prompt += "Please evaluate the response, replying with whether it is acceptable and your feedback."
+        return user_prompt
     
-    def evaluate(self, reply, message, history) -> Evaluation:
-        messages = [{"role": "system", "content": self.evaluator_system_prompt}]
-
-
     def handle_tool_call(self, tool_calls):
         results = []
         for tool_call in tool_calls:
@@ -125,6 +128,19 @@ If the user is engaging in discussion, try to steer them towards getting in touc
         system_prompt += f"With this context, please chat with the user, always staying in character as {self.name}."
         return system_prompt
     
+    def evaluate(self, reply, message, history) -> Evaluation:
+        messages = [{"role": "system", "content": self.evaluator_system_prompt}] + [{"role": "user", "content": self.evaluator_user_prompt(reply, message, history)}]
+        response = self.gemini.beta.chat.completions.parse(model="gemini-2.0-flash", messages=messages, response_format=Evaluation)
+        return response.choices[0].message.parsed
+    
+    def rerun(self, reply, message, history, feedback) -> str:
+        updated_system_prompt = self.system_prompt() + "\n\n## Previous answer rejected\nYou just tried to reply, but the quality control rejected your reply\n"
+        updated_system_prompt += f"## Your attempted answer:\n{reply}\n\n"
+        updated_system_prompt += f"## Reason for rejection:\n{feedback}\n\n"
+        messages = [{"role": "system", "content": updated_system_prompt}] + history + [{"role": "user", "content": message}]
+        response = self.openai.chat.completions.create(model="gpt-4o-mini", messages=messages)
+        return response.choices[0].message.content
+
     def chat(self, message, history):
         messages = [{"role": "system", "content": self.system_prompt()}] + history + [{"role": "user", "content": message}]
         done = False
@@ -139,17 +155,15 @@ If the user is engaging in discussion, try to steer them towards getting in touc
             else:
                 done = True
         reply = response.choices[0].message.content
-        evaluation = evaluate(reply, message, history)
+        evaluation = self.evaluate(reply, message, history)
     
         if evaluation.is_acceptable:
             print("Passed evaluation - returning reply")
         else:
             print("Failed evaluation - retrying")
             print(evaluation.feedback)
-            reply = rerun(reply, message, history, evaluation.feedback)       
-        return reply
-        return response.choices[0].message.content
-    
+            reply = self.rerun(reply, message, history, evaluation.feedback)       
+        return reply    
 
 if __name__ == "__main__":
     me = Me()
