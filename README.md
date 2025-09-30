@@ -1,3 +1,14 @@
+---
+title: {{title}}
+emoji: {{emoji}}
+colorFrom: {{colorFrom}}
+colorTo: {{colorTo}}
+sdk: {{sdk}}
+sdk_version: "{{sdkVersion}}"
+app_file: app.py
+pinned: false
+---
+
 # Career Conversations
 
 This project implements a conversational agent that acts as me (**Syed Omer Ahmer**) on my website. The agent uses OpenAI and Gemini APIs to answer questions professionally and engagingly, as if talking to a potential client or employer.  
