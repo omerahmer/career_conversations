@@ -1,10 +1,10 @@
 ---
-title: {{title}}
-emoji: {{emoji}}
-colorFrom: {{colorFrom}}
-colorTo: {{colorTo}}
-sdk: {{sdk}}
-sdk_version: "{{sdkVersion}}"
+title: Career Conversations
+emoji: 💼
+colorFrom: blue
+colorTo: purple
+sdk: gradio
+sdk_version: "5.22.0"
 app_file: app.py
 pinned: false
 ---
