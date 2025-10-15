@@ -1,8 +1,8 @@
 import json
 from openai import OpenAI
-from me.tools import tools, record_user_details, record_unknown_question
-from me.evaluator import Evaluator
-from me.rag import RAG
+from tools import tools, record_user_details, record_unknown_question
+from evaluator import Evaluator
+from rag import RAG
 
 class Me:
     def __init__(self):
