@@ -25,6 +25,7 @@ jobs:
       - name: Generate embeddings
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: python rag/embedder.py
 
       - name: Commit and push embeddings

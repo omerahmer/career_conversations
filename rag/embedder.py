@@ -4,44 +4,36 @@ from pypdf import PdfReader
 
 client = OpenAI()
 
-def load_sources():
-    sources = {}
+VECTOR_STORE_FILE = "rag/vector_store.json"
 
-    pdf_path = os.path.join("me", "linkedin.pdf")
-    if os.path.exists(pdf_path):
-        reader = PdfReader(pdf_path)
-        linkedin_text = ""
-        for page in reader.pages:
-            if text := page.extract_text():
-                linkedin_text += text + "\n"
-        sources["linkedin.pdf"] = linkedin_text
-
-    for fname in ["summary.txt", "projects.txt"]:
-        path = os.path.join("me", fname)
-        if os.path.exists(path):
-            with open(path, "r", encoding="utf-8") as f:
-                sources[fname] = f.read()
-    return sources
-
-def embed_sources():
-    data = load_sources()
-    chunks = []
-
-    for name, text in data.items():
-        for part in text.split("\n\n"):
-            if part.strip():
-                chunks.append({"source": name, "text": part.strip()})
-
-    print(f"Embedding {len(chunks)} text chunks")
+def embed_text_chunks(text_chunks):
     embeddings = []
-    for c in chunks:
-        emb = client.embeddings.create(model="text-embedding-3-large", input=c["text"]).data[0].embedding
-        embeddings.append({"source": c["source"], "text": c["text"], "embedding": emb})
+    for t in text_chunks:
+        emb = client.embeddings.create(
+            model="text-embedding-3-large",
+            input=t
+        ).data[0].embedding
+        embeddings.append({"text": t, "embedding": emb})
+    return embeddings
+
+def embed_sources(base_folder):
+    all_text = ""
+    for fname in os.listdir(base_folder):
+        path = os.path.join(base_folder, fname)
+        if fname.endswith(".pdf"):
+            reader = PdfReader(path)
+            for page in reader.pages:
+                if t := page.extract_text():
+                    all_text += t + "\n\n"
+        elif fname.endswith(".txt"):
+            with open(path, "r", encoding="utf-8") as f:
+                all_text += f.read() + "\n\n"
+
+    chunks = [c.strip() for c in all_text.split("\n\n") if c.strip()]
+    vector_store = embed_text_chunks(chunks)
 
     os.makedirs("rag", exist_ok=True)
-    with open("rag/vector_store.json", "w", encoding="utf-8") as f:
-        json.dump(embeddings, f, indent=2)
-    print("Saved updated embeddings to rag/vector_store.json")
+    with open(VECTOR_STORE_FILE, "w", encoding="utf-8") as f:
+        json.dump(vector_store, f, ensure_ascii=False, indent=2)
 
-if __name__ == "__main__":
-    embed_sources()
+    print(f"Embedded {len(chunks)} chunks and saved to {VECTOR_STORE_FILE}")

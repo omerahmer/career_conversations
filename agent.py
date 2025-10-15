@@ -9,7 +9,7 @@ class Me:
         self.openai = OpenAI()
         self.name = "Syed Omer Ahmer"
         self.rag = RAG()
-        with open("me/data/summary.txt", "r", encoding="utf-8") as f:
+        with open("me/summary.txt", "r", encoding="utf-8") as f:
             self.summary = f.read()
         self.evaluator = Evaluator(self.name, self.summary, "")
 
