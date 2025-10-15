@@ -1,0 +1,23 @@
+# Career Conversations AI Agent
+Technologies: Python, OpenAI API, Hugging Face, GitHub Actions
+Date: September 2025 – Present
+Description:
+Developed and deployed an AI-powered career Q&A chatbot that represents my professional background in a conversational format.
+Implemented OpenAI function-calling and an evaluator–optimizer model for structured user detail capture, unknown question logging, and response refinement with automated Pushover notifications.
+Automated continuous updates of the chatbot with new information using GitHub Actions, and parsed LinkedIn PDF/summary data with PyPDF to provide context-aware answers.
+
+# Personal Finance Tracker
+Technologies: TypeScript, Next.js, React, Drizzle ORM, Jotai, Express.js
+Date: February 2025 – Present
+Description:
+Built a full-stack web application to centralize financial data, integrating multiple bank accounts and transaction sources into a single dashboard.
+Implemented state management with Jotai and efficient data persistence using Drizzle ORM with PostgreSQL.
+Integrated the OpenAI API to leverage ChatGPT for automated transaction categorization, spending analysis, and personalized financial insights, helping users understand and optimize their spending habits.
+
+# Nanotechnology Lab Website
+Technologies: TypeScript, React, MongoDB, JWT, Express.js
+Date: October 2023 – September 2024
+Description:
+Led the architecture of a web application that performs advanced theoretical simulations and calculations for carbon nanotube functionalization.
+Developed a virtual chip generator that sends inputs to the electron-beam lithography machines.
+Wrote an API that serves user information and performs calculations if the user is authenticated (JWT and CORS).

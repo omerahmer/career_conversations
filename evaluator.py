@@ -1,8 +1,10 @@
-from pydantic import BaseModel
 from openai import OpenAI
-import os
+from dataclasses import dataclass
 
-class Evaluation(BaseModel):
+client = OpenAI()
+
+@dataclass
+class Evaluation:
     is_acceptable: bool
     feedback: str
 
@@ -11,24 +13,35 @@ class Evaluator:
         self.name = name
         self.summary = summary
         self.linkedin = linkedin
-        self.gemini = OpenAI(api_key=os.getenv("GEMINI_API_KEY"), base_url="https://api.gemini.google.com/v1beta/openai")
-        
-        self.evaluator_system_prompt = f"You are an evaluator that decides whether a response to a question is acceptable. \
-You are provided with a conversation between a User and an Agent. Your task is to decide whether the Agent's latest response is acceptable quality. \
-The Agent is playing the role of {self.name} and is representing {self.name} on their website. \
-The Agent has been instructed to be professional and engaging, as if talking to a potential client or future employer who came across the website. \
-The Agent has been provided with context on {self.name} in the form of their summary and LinkedIn details. Here's the information:"
-        self.evaluator_system_prompt += f"\n\n## Summary:\n{self.summary}\n\n## LinkedIn Profile:\n{self.linkedin}\n\n"
-        self.evaluator_system_prompt += f"With this context, please evaluate the latest response, replying with whether the response is acceptable and your feedback."
 
-    def evaluator_user_prompt(self, reply, message, history):
-        user_prompt = f"Here's the conversation between the User and the Agent: \n\n{history}\n\n"
-        user_prompt += f"Here's the latest message from the User: \n\n{message}\n\n"
-        user_prompt += f"Here's the latest response from the Agent: \n\n{reply}\n\n"
-        user_prompt += "Please evaluate the response, replying with whether it is acceptable and your feedback."
-        return user_prompt
-    
-    def evaluate(self, reply, message, history) -> Evaluation:
-        messages = [{"role": "system", "content": self.evaluator_system_prompt}] + [{"role": "user", "content": self.evaluator_user_prompt(reply, message, history)}]
-        response = self.gemini.beta.chat.completions.parse(model="gemini-2.0-flash", messages=messages, response_format=Evaluation)
-        return response.choices[0].message.parsed
+    def evaluate(self, reply, message, history):
+        system_prompt = f"""You are an evaluation model checking whether the following reply is an accurate, professional, and faithful representation of {self.name}'s career background.
+
+You have access to their summary and LinkedIn profile text:
+
+SUMMARY:
+{self.summary}
+
+LINKEDIN:
+{self.linkedin}
+
+Evaluate the given reply for these criteria:
+1. Faithfulness: Does it reflect {self.name}'s actual experience, skills, and projects?
+2. Professional tone: Is it written clearly and respectfully, suitable for a potential employer or client?
+3. Relevance: Does it answer the user's question appropriately?
+
+If it fails on any of these, explain why and suggest improvement areas."""
+
+        user_prompt = f"User question: {message}\n\nProposed reply: {reply}\n\nProvide structured feedback."
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+
+        feedback = response.choices[0].message.content
+        acceptable = not any(word in feedback.lower() for word in ["inaccurate", "unprofessional", "irrelevant", "wrong", "needs improvement"])
+        return Evaluation(is_acceptable=acceptable, feedback=feedback)
